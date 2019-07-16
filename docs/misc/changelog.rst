@@ -14,6 +14,7 @@ Breaking Changes:
 
 New Features:
 ^^^^^^^^^^^^^
+- added support for :code:`gym.spaces.MultiDiscrete` spaces in pretraining.
 
 Bug Fixes:
 ^^^^^^^^^^
