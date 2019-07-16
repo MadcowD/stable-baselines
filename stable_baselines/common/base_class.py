@@ -231,7 +231,8 @@ class BaseRLModel(ABC):
         continuous_actions = isinstance(self.action_space, gym.spaces.Box)
         discrete_actions = isinstance(self.action_space, gym.spaces.Discrete)
         multidiscrete_actions = isinstance(self.action_space, gym.spaces.MultiDiscrete)
-        assert discrete_actions or continuous_actions or multidiscrete_actions, 'Only Discrete, Box, or MultiDiscrete action spaces are supported'
+        assert discrete_actions or continuous_actions or multidiscrete_actions, (
+            'Only Discrete, Box, or MultiDiscrete action spaces are supported')
 
         # Validate the model every 10% of the total number of iteration
         if val_interval is None:
