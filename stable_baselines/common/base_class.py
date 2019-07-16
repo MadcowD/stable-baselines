@@ -285,7 +285,6 @@ class BaseRLModel(ABC):
 
             self.sess.run(tf.global_variables_initializer())
 
-
         if self.verbose > 0:
             print("Pretraining with Behavior Cloning...")
 
