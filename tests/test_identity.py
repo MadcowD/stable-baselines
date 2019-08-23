@@ -1,8 +1,8 @@
 import pytest
 import numpy as np
 
-from stable_baselines import A2C, ACER, ACKTR, DQN, DDPG, PPO1, PPO2, TRPO
-from stable_baselines.ddpg import AdaptiveParamNoiseSpec
+from stable_baselines import A2C, ACER, ACKTR, DQN, DDPG, SAC, PPO1, PPO2, TD3, TRPO
+from stable_baselines.ddpg import NormalActionNoise
 from stable_baselines.common.identity_env import IdentityEnv, IdentityEnvBox
 from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines.common import set_global_seeds
@@ -48,26 +48,35 @@ def test_identity(model_name):
         action, _ = model.predict(obs)
         obs, reward, _, _ = env.step(action)
         reward_sum += reward
+
     assert model.action_probability(obs).shape == (1, 10), "Error: action_probability not returning correct shape"
-    assert np.prod(model.action_probability(obs, actions=env.action_space.sample()).shape) == 1, \
-        "Error: not scalar probability"
+    action = env.action_space.sample()
+    action_prob = model.action_probability(obs, actions=action)
+    assert np.prod(action_prob.shape) == 1, "Error: not scalar probability"
+    action_logprob = model.action_probability(obs, actions=action, logp=True)
+    assert np.allclose(action_prob, np.exp(action_logprob)), (action_prob, action_logprob)
+
     assert reward_sum > 0.9 * n_trials
     # Free memory
     del model, env
 
 
 @pytest.mark.slow
-def test_identity_ddpg():
+@pytest.mark.parametrize("model_class", [DDPG, TD3, SAC])
+def test_identity_continuous(model_class):
     """
     Test if the algorithm (with a given policy)
     can learn an identity transformation (i.e. return observation as an action)
     """
     env = DummyVecEnv([lambda: IdentityEnvBox(eps=0.5)])
 
-    std = 0.2
-    param_noise = AdaptiveParamNoiseSpec(initial_stddev=float(std), desired_action_stddev=float(std))
+    if model_class in [DDPG, TD3]:
+        n_actions = 1
+        action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
+    else:
+        action_noise = None
 
-    model = DDPG("MlpPolicy", env, gamma=0.0, param_noise=param_noise, memory_limit=int(1e6))
+    model = model_class("MlpPolicy", env, gamma=0.1, action_noise=action_noise, buffer_size=int(1e6))
     model.learn(total_timesteps=20000, seed=0)
 
     n_trials = 1000

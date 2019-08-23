@@ -47,7 +47,7 @@ class HER(BaseRLModel):
             self._create_replay_wrapper(self.env)
 
         assert issubclass(model_class, OffPolicyRLModel), \
-            "Error: HER only works with Off policy model (such as DDPG, SAC and DQN)."
+            "Error: HER only works with Off policy model (such as DDPG, SAC, TD3 and DQN)."
 
         self.model = self.model_class(policy, self.env, *args, **kwargs)
         # Patch to support saving/loading
@@ -126,8 +126,8 @@ class HER(BaseRLModel):
     def predict(self, observation, state=None, mask=None, deterministic=True):
         return self.model.predict(self._check_obs(observation), state, mask, deterministic)
 
-    def action_probability(self, observation, state=None, mask=None, actions=None):
-        return self.model.action_probability(self._check_obs(observation), state, mask, actions)
+    def action_probability(self, observation, state=None, mask=None, actions=None, logp=False):
+        return self.model.action_probability(self._check_obs(observation), state, mask, actions, logp)
 
     def _save_to_file(self, save_path, data=None, params=None):
         # HACK to save the replay wrapper
